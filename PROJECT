@@ -1,0 +1,3 @@
+version: "2"
+domain: dulltz.com
+repo: github.com/dulltz/poor-gke-address-controller
