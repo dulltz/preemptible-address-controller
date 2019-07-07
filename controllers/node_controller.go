@@ -70,18 +70,18 @@ func (r *NodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	nicName := r.findNetworkInterfaceName(instance)
 	if nicName == "" {
-		log.Info("external-nat not found", "node", node.Name)
-		return ctrl.Result{}, nil
+		log.Info(accessConfigName+" not found", "node", node.Name)
+	} else {
+		_, err = r.GCE.Instances.DeleteAccessConfig(r.ProjectID, r.Zone, node.Name, accessConfigName, nicName).Do()
+		if err != nil {
+			log.Error(err, "unable to remove "+accessConfigName+" from the instance", "node", node.Name)
+		}
 	}
-	_, err = r.GCE.Instances.DeleteAccessConfig(r.ProjectID, r.Zone, node.Name, accessConfigName, nicName).Do()
-	if err != nil {
-		log.Error(err, "unable to remove access config from instance", "node", node.Name)
-	}
+
 	ac := &compute.AccessConfig{
 		Name:  accessConfigName,
 		NatIP: desiredIP,
 	}
-
 	_, err = r.GCE.Instances.AddAccessConfig(r.ProjectID, r.Zone, node.Name, nicName, ac).Do()
 	if err != nil {
 		log.Error(err, "unable to add access config to instance", "node", node.Name, "nic", nicName)
