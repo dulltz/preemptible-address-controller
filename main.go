@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"os"
 
 	"github.com/dulltz/preemptible-address-controller/controllers"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/compute/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -28,10 +31,14 @@ func init() {
 func main() {
 	var addressLabelKey string
 	var addressLabelVal string
+	var region string
+	var zone string
 	var metricsAddr string
 	var enableLeaderElection bool
-	flag.StringVar(&addressLabelKey, "address-label", "preemptible-address", "The label key of preemptible instance's address")
-	flag.StringVar(&addressLabelVal, "address-name", "", "The name of GCE address")
+	flag.StringVar(&addressLabelKey, "address-label", "preemptible-address", "Label key of the preemptible instance's external address")
+	flag.StringVar(&addressLabelVal, "address-name", "", "Name of the target external address")
+	flag.StringVar(&region, "region", "us-central1", "Region of the target external address")
+	flag.StringVar(&zone, "zone", "us-central1-a", "Zone of the target external address")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
@@ -54,11 +61,26 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx := context.Background()
+	gce, err := compute.NewService(ctx)
+	if err != nil {
+		setupLog.Error(err, "unable to create GCE client")
+		os.Exit(1)
+	}
+	credential, err := google.FindDefaultCredentials(ctx, compute.ComputeScope)
+	if err != nil {
+		setupLog.Error(err, "unable to find default credentials")
+		os.Exit(1)
+	}
 	err = (&controllers.NodeReconciler{
 		Client:          mgr.GetClient(),
 		Log:             ctrl.Log.WithName("controllers").WithName("Node"),
+		GCE:             gce,
+		ProjectID:       credential.ProjectID,
+		Region:          region,
+		Zone:            zone,
 		AddressLabelKey: addressLabelKey,
-		AddressLabelVal: addressLabelVal,
+		AddressName:     addressLabelVal,
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Node")
