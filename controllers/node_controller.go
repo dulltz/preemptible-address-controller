@@ -31,7 +31,7 @@ type NodeReconciler struct {
 
 func (r *NodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Log.WithValues("node", req.NamespacedName)
+	log := r.Log.WithValues("req", req.NamespacedName)
 	var nodeList corev1.NodeList
 	err := r.List(ctx, &nodeList, client.MatchingLabels(map[string]string{r.AddressLabelKey: r.AddressName}))
 	if err != nil {
