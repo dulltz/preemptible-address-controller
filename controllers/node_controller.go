@@ -62,7 +62,7 @@ func (r *NodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	node := nodeList.Items[0]
 	log.Info("the address is not used, so add it to the node", "node", node.Name)
 
-	instance, err := r.GCE.Instances.Get(r.ProjectID, r.Region, node.Name).Do()
+	instance, err := r.GCE.Instances.Get(r.ProjectID, r.Zone, node.Name).Do()
 	if err != nil {
 		log.Error(err, "unable to get the instance", "node", node.Name)
 		return ctrl.Result{}, nil
