@@ -4,7 +4,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/dulltz/poor-gke-address-controller/controllers"
+	"github.com/dulltz/preemptible-address-controller/controllers"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
