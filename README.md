@@ -9,6 +9,9 @@ you would think so that - "I want a static IP, and want to use preemptible insta
 
 preemptible-address-controller controls Node resources of preemptible instances, and keeps their IP at your specified static address without Ingress resources. 
 
+
+**State: Under developing**
+
 How to use
 ----------
 
