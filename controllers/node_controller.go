@@ -72,24 +72,19 @@ func (r *NodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if nicName == "" {
 		log.Info(accessConfigName+" not found, so use nic0", "node", node.Name)
 		nicName = "nic0"
-	} else {
-		_, err = r.GCE.Instances.DeleteAccessConfig(r.ProjectID, r.Zone, node.Name, accessConfigName, nicName).Do()
-		if err != nil {
-			log.Error(err, "unable to remove "+accessConfigName+" from the instance", "node", node.Name)
-		}
 	}
 
 	ac := &compute.AccessConfig{
 		Name:  accessConfigName,
 		NatIP: desiredIP,
 	}
-	_, err = r.GCE.Instances.AddAccessConfig(r.ProjectID, r.Zone, node.Name, nicName, ac).Do()
+	_, err = r.GCE.Instances.UpdateAccessConfig(r.ProjectID, r.Zone, node.Name, nicName, ac).Do()
 	if err != nil {
-		log.Error(err, "unable to add access config to instance", "node", node.Name, "nic", nicName)
+		log.Error(err, "unable to update access config to instance", "node", node.Name, "nic", nicName)
 		return ctrl.Result{}, nil
 	}
 
-	log.Info("add access config to instance", "node", node.Name, "nic", nicName)
+	log.Info("update access config to instance", "node", node.Name, "nic", nicName)
 	return ctrl.Result{}, nil
 }
 
