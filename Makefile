@@ -1,8 +1,12 @@
-
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= quay.io/tsuruda/preemptible-address-controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+GOOS = $(shell go env GOOS)
+GOARCH = $(shell go env GOARCH)
+SUDO = sudo
+KUBEBUILDER_VERSION = 2.0.0-alpha.4
+GO111MODULE = on
 
 all: manager
 
@@ -62,3 +66,9 @@ CONTROLLER_GEN=$(shell go env GOPATH)/bin/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
+
+setup:
+	curl -sL https://go.kubebuilder.io/dl/$(KUBEBUILDER_VERSION)/$(GOOS)/$(GOARCH) | tar -xz -C /tmp/
+	$(SUDO) mv /tmp/kubebuilder_$(KUBEBUILDER_VERSION)_$(GOOS)_$(GOARCH) /usr/local/kubebuilder
+	$(SUDO) curl -o /usr/local/kubebuilder/bin/kustomize -sL https://go.kubebuilder.io/kustomize/$(GOOS)/$(GOARCH)
+	$(SUDO) chmod a+x /usr/local/kubebuilder/bin/kustomize

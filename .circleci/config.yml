@@ -1,0 +1,58 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: make setup
+      - run: make test
+  docker:
+    docker:
+      - image: docker:stable
+    environment:
+      IMG: quay.io/tsuruda/preemptible-address-controller
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: docker build . -t ${IMG}
+      - run:
+          name: Push image to quay.io
+          command: |
+            if [ "$CIRCLE_TAG" = "" ]; then exit 0; fi
+            docker login -u $QUAY_USER -p $QUAY_PASSWORD quay.io
+            echo "pushing image ..."
+            TAG=$(echo $CIRCLE_TAG | cut -c 2-)
+            docker tag $IMG:latest $IMG:$TAG
+            docker push $IMG:$TAG
+            if echo $TAG | grep -q -e - ; then
+                echo ===== Skip pushing branch tags for pre-release $TAG =====
+                exit 0
+            fi
+            docker push $IMG:latest
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build
+      - docker:
+          requires:
+            - build
+  release:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - docker:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
