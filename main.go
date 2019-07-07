@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"os"
 
@@ -25,14 +26,23 @@ func init() {
 }
 
 func main() {
+	var addressLabelKey string
+	var addressLabelVal string
 	var metricsAddr string
 	var enableLeaderElection bool
+	flag.StringVar(&addressLabelKey, "address-label", "preemptible-address", "The label key of preemptible instance's address")
+	flag.StringVar(&addressLabelVal, "address-name", "", "The name of GCE address")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.Logger(true))
+
+	if len(addressLabelVal) == 0 {
+		setupLog.Error(errors.New("address-name is required"), "")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -45,8 +55,10 @@ func main() {
 	}
 
 	err = (&controllers.NodeReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Node"),
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("Node"),
+		AddressLabelKey: addressLabelKey,
+		AddressLabelVal: addressLabelVal,
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Node")
