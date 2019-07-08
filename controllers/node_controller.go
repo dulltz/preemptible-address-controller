@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-logr/logr"
 	"google.golang.org/api/compute/v1"
@@ -31,7 +30,7 @@ type NodeReconciler struct {
 
 func (r *NodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Log.WithValues("req", req.NamespacedName)
+	log := r.Log
 	var nodeList corev1.NodeList
 	err := r.List(ctx, &nodeList, client.MatchingLabels(map[string]string{r.AddressLabelKey: r.AddressName}))
 	if err != nil {
@@ -54,7 +53,7 @@ func (r *NodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		for _, a := range n.Status.Addresses {
 			if a.Type == corev1.NodeExternalIP && a.Address == desiredIP {
 				log.Info("the address is already used", "node", n.Name, "address", desiredIP)
-				return ctrl.Result{RequeueAfter: 12 * time.Hour}, nil
+				return ctrl.Result{}, nil
 			}
 		}
 	}
