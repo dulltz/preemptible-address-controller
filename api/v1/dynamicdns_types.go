@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"net"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -11,6 +13,13 @@ import (
 type DynamicDNSSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	ARecords []ARecord `json:"arecords,omitempty"`
+}
+
+// ARecord defines the A record of DynamicDNS resource
+type ARecord struct {
+	Address net.IP `json:"address"`
+	CName   string `json:"cname"`
 }
 
 // DynamicDNSStatus defines the observed state of DynamicDNS
