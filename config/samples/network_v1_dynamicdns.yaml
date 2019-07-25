@@ -1,0 +1,7 @@
+apiVersion: network.dulltz.com/v1
+kind: DynamicDNS
+metadata:
+  name: dynamicdns-sample
+spec:
+  # Add fields here
+  foo: bar

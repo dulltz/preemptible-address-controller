@@ -6,6 +6,7 @@ import (
 	"flag"
 	"os"
 
+	networkv1 "github.com/dulltz/preemptible-address-controller/api/v1"
 	"github.com/dulltz/preemptible-address-controller/controllers"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/compute/v1"
@@ -25,6 +26,7 @@ var (
 func init() {
 
 	corev1.AddToScheme(scheme)
+	_ = networkv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -84,6 +86,13 @@ func main() {
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Node")
+		os.Exit(1)
+	}
+	if err = (&controllers.DynamicDNSReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("DynamicDNS"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "DynamicDNS")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
